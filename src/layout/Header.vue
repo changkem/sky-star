@@ -1,5 +1,5 @@
 <template>
-  <header></header>
+  <header />
 </template>
 
 <script lang="ts">
@@ -11,6 +11,6 @@ export default defineComponent({});
 <style lang="less" scoped>
 header {
   height: 100px;
-  background: linear-gradient(to right bottom, #F02FC2, #6094EA);
+  background: linear-gradient(to right bottom, #f02fc2, #6094ea);
 }
 </style>

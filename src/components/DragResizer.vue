@@ -1,91 +1,65 @@
 <template>
   <div
-    class="resizer"
     ref="resizerRef"
-    v-bind:style="addPxSuffix(position)"
+    class="resizer"
+    :style="addPxSuffix(position)"
     @click="handleFocus"
+    @dblclick="handleClick"
     @mouseenter="handleIn"
     @mouseleave="handleOut"
     @mousedown="handleDragStart"
     @dragstart.prevent=""
   >
-    <slot></slot>
-    <div
-      class="resize resize-wn"
-      v-bind:style="{ display: state.activity ? 'block' : 'none' }"
-    ></div>
-    <div
-      class="resize resize-w"
-      v-bind:style="{ display: state.activity ? 'block' : 'none' }"
-    ></div>
-    <div
-      class="resize resize-en"
-      v-bind:style="{ display: state.activity ? 'block' : 'none' }"
-    ></div>
-    <div
-      class="resize resize-n"
-      v-bind:style="{ display: state.activity ? 'block' : 'none' }"
-    ></div>
-    <div
-      class="resize resize-ws"
-      v-bind:style="{ display: state.activity ? 'block' : 'none' }"
-    ></div>
-    <div
-      class="resize resize-s"
-      v-bind:style="{ display: state.activity ? 'block' : 'none' }"
-    ></div>
-    <div
-      class="resize resize-es"
-      v-bind:style="{ display: state.activity ? 'block' : 'none' }"
-    ></div>
-    <div
-      class="resize resize-e"
-      v-bind:style="{ display: state.activity ? 'block' : 'none' }"
-    ></div>
+    <slot />
+    <div class="resize resize-wn" :style="{ display: state.activity ? 'block' : 'none' }" />
+    <div class="resize resize-w" :style="{ display: state.activity ? 'block' : 'none' }" />
+    <div class="resize resize-en" :style="{ display: state.activity ? 'block' : 'none' }" />
+    <div class="resize resize-n" :style="{ display: state.activity ? 'block' : 'none' }" />
+    <div class="resize resize-ws" :style="{ display: state.activity ? 'block' : 'none' }" />
+    <div class="resize resize-s" :style="{ display: state.activity ? 'block' : 'none' }" />
+    <div class="resize resize-es" :style="{ display: state.activity ? 'block' : 'none' }" />
+    <div class="resize resize-e" :style="{ display: state.activity ? 'block' : 'none' }" />
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, onBeforeUnmount, reactive, ref, watch } from "vue";
-
-const addPxSuffix = (style: Record<string, string | number>) => {
-  const clone = { ...style };
-  Object.keys(clone).forEach((key) => {
-    if (typeof clone[key] === "string") {
-      return;
-    }1
-    clone[key] = `${clone[key]}px`;
-  });
-  return clone;
-};
+import { defineComponent, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
+import { DRAGGING, FITED } from '@/constant/event';
+import { mitt, randomStr, addPxSuffix } from '@/utils';
+import { throttle } from 'lodash-es';
 
 export default defineComponent({
-  setup(a) {
-
+  setup() {
     const resizerRef = ref<HTMLElement>();
     const position = reactive({
       top: 0,
       left: 0,
-      width: 200,
+      width: 400,
       height: 200,
-      transform: "",
+      transform: '',
     });
     const state = reactive({ activity: false, focus: false });
 
+    const id = randomStr();
+    const intialPos = { x: 0, y: 0 };
     const startPos = { x: 0, y: 0 };
-    const startRect = { ...position, transformX: 0, transformY: 0 };
-    let className = "";
+    const startRect = { ...position, left: 0, top: 0 };
+    let className = '';
     let dragging = false;
 
     const handleFocus = () => {
       state.focus = true;
     };
 
+    const handleClick = () => {
+      mitt.emit('click', id);
+    };
+
     const handleIn = () => {
       state.activity = true;
     };
 
-    const handleOut = (e: MouseEvent) => {
+    const handleOut = () => {
       if (!state.focus) {
         state.activity = false;
       }
@@ -104,72 +78,90 @@ export default defineComponent({
         return;
       }
 
-      let transformX = startRect.transformX,
-        transformY = startRect.transformY;
+      let left = startRect.left,
+        top = startRect.top;
 
-      if (className.endsWith("s")) {
+      if (className.endsWith('s')) {
         position.height = startRect.height + e.pageY - startPos.y;
       }
-      if (className.endsWith("n")) {
+      if (className.endsWith('n')) {
         position.height = startRect.height + startPos.y - e.pageY;
-        transformY = startRect.transformY - (startPos.y - e.pageY);
+        top = startRect.top - (startPos.y - e.pageY);
       }
-      if (className.includes("-e")) {
+      if (className.includes('-e')) {
         position.width = startRect.width + e.pageX - startPos.x;
       }
-      if (className.includes("-w")) {
+      if (className.includes('-w')) {
         position.width = startRect.width + startPos.x - e.pageX;
-        transformX = startRect.transformX - (startPos.x - e.pageX);
+        left = startRect.left - (startPos.x - e.pageX);
       }
 
-      if (!className.includes("resize")) {
-        transformX = startRect.transformX - (startPos.x - e.pageX);
-        transformY = startRect.transformY - (startPos.y - e.pageY);
+      if (!className.includes('resize')) {
+        left = startRect.left - (startPos.x - e.pageX);
+        top = startRect.top - (startPos.y - e.pageY);
       }
 
-      if(position.width < 20 || position.height < 20) {
+      if (position.width < 20 || position.height < 20) {
         position.width = Math.max(20, position.width);
         position.height = Math.max(20, position.height);
         return;
       }
 
-      position.left = transformX;
-      position.top = transformY;
+      position.left = left;
+      position.top = top;
     };
 
     const handleDragEnd = (e: MouseEvent) => {
       dragging = false;
-      if(!state.focus) {
-        return
+      if (!state.focus) {
+        return;
       }
-      if(!className.includes('resize')) {
-          startRect.transformX += e.pageX - startPos.x;
-          startRect.transformY += e.pageY - startPos.y;
+      if (!className.includes('resize')) {
+        startRect.left += e.pageX - startPos.x;
+        startRect.top += e.pageY - startPos.y;
       }
-      if (className.includes("-w")) {
-        startRect.transformX += startRect.width - position.width;
+      if (className.includes('-w')) {
+        startRect.left += startRect.width - position.width;
       }
-      if (className.endsWith("n")) {
-        startRect.transformY += startRect.height - position.height;
+      if (className.endsWith('n')) {
+        startRect.top += startRect.height - position.height;
       }
     };
 
-    const documentClick = (
-      e: MouseEvent
-    ) => {
+    const documentClick = (e: MouseEvent) => {
       const inside = resizerRef.value!.contains(e.target as HTMLElement);
       state.focus = inside;
       state.activity = inside;
     };
 
-    document.addEventListener("mousedown", documentClick);
-    document.addEventListener("mousemove", handleDrag);
-    document.addEventListener("mouseup", handleDragEnd);
-    
+    watch(position, () => {
+      mitt.emit(DRAGGING, {
+        id,
+        x: intialPos.x + position.left,
+        y: intialPos.y + position.top,
+        width: position.width,
+        height: position.height,
+      });
+    });
+
+    mitt.on(FITED, (targetPos) => {
+      console.log(targetPos);
+    });
+
+    document.addEventListener('mousedown', documentClick);
+    document.addEventListener('mousemove', handleDrag);
+    document.addEventListener('mouseup', handleDragEnd);
+
     onBeforeUnmount(() => {
-      document.removeEventListener("mousedown", documentClick);
-      document.removeEventListener("mousemove", handleDrag);
-      document.removeEventListener("mouseup", handleDragEnd);
+      document.removeEventListener('mousedown', documentClick);
+      document.removeEventListener('mousemove', handleDrag);
+      document.removeEventListener('mouseup', handleDragEnd);
+    });
+
+    onMounted(() => {
+      const { x, y } = resizerRef.value!.getBoundingClientRect();
+      intialPos.x = x;
+      intialPos.y = y;
     });
 
     return {
@@ -179,6 +171,7 @@ export default defineComponent({
       addPxSuffix,
       handleIn,
       handleOut,
+      handleClick,
       handleFocus,
       handleDragStart,
     };
