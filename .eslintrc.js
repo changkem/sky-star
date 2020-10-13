@@ -9,22 +9,37 @@ module.exports = {
       jsx: true,
     },
   },
-  plugins: [
-    '@typescript-eslint',
-    '@typescript-eslint/recommended',
-    'prettier/recommended', // Enables eslint-plugin-prettier and eslint-config-prettier
-    'vue/vue3-recommended',
-  ],
+  plugins: ['@typescript-eslint'],
   // settings: {
   //   tsx: {
   //     version: "detect" // Tells eslint-plugin-react to automatically detect the version of React to use
   //   }
   // },
   extends: [
-    'prettier/@typescript-eslint', // Uses eslint-config-prettier to disable ESLint rules from @typescript-eslint/eslint-plugin that would conflict with prettier
+    'plugin:vue/vue3-recommended',
+    'plugin:prettier/recommended', // Enables eslint-plugin-prettier and eslint-config-prettier
+    'plugin:@typescript-eslint/recommended',
+    'prettier/@typescript-eslint',
+    // Uses eslint-config-prettier to disable ESLint rules from @typescript-eslint/eslint-plugin that would conflict with prettier
   ],
   rules: {
-    // Place to specify ESLint rules. Can be used to overwrite rules specified from the extended configs
-    // e.g. "@typescript-eslint/explicit-function-return-type": "off",
+    'max-len': [
+      2,
+      {
+        code: 100,
+        comments: 200,
+      },
+    ],
+    'vue/max-attributes-per-line': [
+      0,
+      {
+        singleline: 2,
+        multiline: {
+          max: 1,
+          allowFirstLine: false,
+        },
+      },
+    ],
+    '@typescript-eslint/no-non-null-assertion': [0],
   },
 };

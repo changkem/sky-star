@@ -3,7 +3,7 @@
   "useTabs": false,
   "semi": true,
   "trailingComma": "all",
-  "printWidth": 120,
+  "printWidth": 100,
   "singleQuote": true,
   "bracketSpacing": true,
   "htmlWhitespaceSensitivity": "ignore"

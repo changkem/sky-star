@@ -1,6 +1,7 @@
 <template>
   <Header />
   <div class="content">
+    <Components />
     <div class="viewer">
       <Editor />
     </div>
@@ -13,6 +14,7 @@ import { defineComponent } from 'vue';
 import Header from './layout/Header.vue';
 import Editor from './layout/Editor.vue';
 import Operation from './layout/Operation.vue';
+import Components from './layout/Components.vue';
 
 export default defineComponent({
   name: 'App',
@@ -20,6 +22,7 @@ export default defineComponent({
     Editor,
     Header,
     Operation,
+    Components,
   },
 });
 </script>

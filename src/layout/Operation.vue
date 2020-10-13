@@ -1,29 +1,22 @@
 <template>
-  <div class="operation">
-    <DragResizer>
-      <div style="background: linear-gradient(to right bottom, #3a7bd5, #3a6073); height: 100%" />
-    </DragResizer>
-    <DragResizer>
-      <div style="background: linear-gradient(to right bottom, #3a7bd5, #3a6073); height: 100%" />
-    </DragResizer>
-    <DragResizer>
-      <div style="background: linear-gradient(to right bottom, #3a7bd5, #3a6073); height: 100%" />
-    </DragResizer>
-  </div>
+  <div class="operation" />
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
-import DragResizer from '@/components/DragResizer.vue';
+import { defineComponent, reactive } from 'vue';
 import { mitt } from '@/utils';
+import { COMP_INSTACE_ACTIVE } from '@/constant/event';
+
+interface State {
+  config: Record<string, {}>;
+}
 
 export default defineComponent({
-  components: {
-    DragResizer,
-  },
   setup() {
-    mitt.on('click', (id) => {
-      console.log(id);
+    const { config } = reactive<State>({ config: {} });
+    mitt.on(COMP_INSTACE_ACTIVE, (id) => {
+      config[id] = {};
+      console.log(id, config);
     });
     return {};
   },
@@ -33,7 +26,6 @@ export default defineComponent({
 <style lang="less" scoped>
 .operation {
   flex: 1;
-  min-width: 400px;
-  background: #ccc;
+  max-width: 400px;
 }
 </style>

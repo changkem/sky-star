@@ -4,4 +4,8 @@ export const REAC_DELETED = 'REAC_DELETED';
 
 export const DRAGGING = 'DRAGGING';
 
-export const FITED = 'FITED';
+export const ADSORBED = 'ADSORBED';
+
+export const CHOOSE_COMPONENT = 'CHOOSE_COMPONENT';
+
+export const COMP_INSTACE_ACTIVE = 'COMP_INSTACE_ACTIVE';

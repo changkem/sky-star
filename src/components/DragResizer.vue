@@ -1,13 +1,13 @@
 <template>
   <div
     ref="resizerRef"
-    class="resizer"
+    :class="{ resizer: true, active: state.activity }"
     :style="addPxSuffix(position)"
     @click="handleFocus"
     @dblclick="handleClick"
     @mouseenter="handleIn"
     @mouseleave="handleOut"
-    @mousedown="handleDragStart"
+    @mousedown.prevent="handleDragStart"
     @dragstart.prevent=""
   >
     <slot />
@@ -23,19 +23,31 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
-import { DRAGGING, FITED } from '@/constant/event';
+import {
+  defineComponent,
+  onBeforeUnmount,
+  onMounted,
+  PropType,
+  reactive,
+  ref,
+  unref,
+  watch,
+} from 'vue';
+import { DRAGGING, ADSORBED, COMP_INSTACE_ACTIVE } from '@/constant/event';
 import { mitt, randomStr, addPxSuffix } from '@/utils';
-import { throttle } from 'lodash-es';
 
 export default defineComponent({
-  setup() {
+  props: {
+    initalPos: {
+      type: Object as PropType<Record<'left' | 'top' | 'width' | 'height', number>>,
+      default: {},
+    },
+  },
+  setup(props) {
+    console.log(props.initalPos);
     const resizerRef = ref<HTMLElement>();
     const position = reactive({
-      top: 0,
-      left: 0,
-      width: 400,
-      height: 200,
+      ...props.initalPos,
       transform: '',
     });
     const state = reactive({ activity: false, focus: false });
@@ -52,7 +64,7 @@ export default defineComponent({
     };
 
     const handleClick = () => {
-      mitt.emit('click', id);
+      mitt.emit(COMP_INSTACE_ACTIVE, id);
     };
 
     const handleIn = () => {
@@ -129,22 +141,23 @@ export default defineComponent({
     };
 
     const documentClick = (e: MouseEvent) => {
-      const inside = resizerRef.value!.contains(e.target as HTMLElement);
+      const inside = unref(resizerRef)!.contains(e.target as HTMLElement);
       state.focus = inside;
       state.activity = inside;
     };
 
     watch(position, () => {
+      // console.log(position, intialPos);
       mitt.emit(DRAGGING, {
         id,
-        x: intialPos.x + position.left,
-        y: intialPos.y + position.top,
+        x: intialPos.x + position.left - 400,
+        y: intialPos.y + position.top - 200,
         width: position.width,
         height: position.height,
       });
     });
 
-    mitt.on(FITED, (targetPos) => {
+    mitt.on(ADSORBED, (targetPos) => {
       console.log(targetPos);
     });
 
@@ -181,7 +194,11 @@ export default defineComponent({
 
 <style lang="less" scoped>
 .resizer {
-  position: relative;
+  position: absolute;
+  box-sizing: border-box;
+  &.active {
+    border: 1px blue solid;
+  }
 }
 
 .resize {

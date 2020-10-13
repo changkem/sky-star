@@ -1,11 +1,14 @@
 {
   "include": ["./**/*.ts", "./**/*.tsx"],
   "compilerOptions": {
+    "strict": true,
     "baseUrl": "./",
     "jsx": "preserve",
-    "strict": true,
+    "module": "esnext",
+    "target": "esnext",
     "paths": {
       "@/*": ["./src/*"],
-    }
+    },
+    "moduleResolution": "node"
   }
 }

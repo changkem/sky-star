@@ -5,14 +5,14 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, onMounted, reactive, ref } from 'vue';
+import { defineComponent, onMounted, reactive, ref, unref } from 'vue';
 
 export default defineComponent({
   setup() {
     const ruleRef = ref<HTMLElement>();
     const state = reactive<{ scales: number[] }>({ scales: [] });
     onMounted(() => {
-      const clientRect = ruleRef.value!.getBoundingClientRect();
+      const clientRect = unref(ruleRef)!.getBoundingClientRect();
       state.scales = new Array(Math.floor(clientRect.width / 100));
     });
     return { state, ruleRef };
