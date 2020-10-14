@@ -20,3 +20,13 @@ export const addPxSuffix = (style: Record<string, string | number>): Record<stri
   });
   return clone as Record<string, string>;
 };
+
+export const getRange = (min: number, max: number, val: number): number => {
+  if (val < min) {
+    return min;
+  }
+  if (val > max) {
+    return max;
+  }
+  return val;
+};

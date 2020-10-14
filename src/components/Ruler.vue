@@ -1,6 +1,8 @@
 <template>
   <div ref="ruleRef" class="ruler">
-    <span v-for="(scale, index) in state.scales" :key="scale" class="scale">{{ (index + 1) * 100 }}</span>
+    <span v-for="(scale, index) in state.scales" :key="scale" class="scale">
+      {{ (index + 1) * 100 }}
+    </span>
   </div>
 </template>
 
@@ -22,6 +24,7 @@ export default defineComponent({
 
 <style lang="less">
 .ruler {
+  position: absolute;
   width: 100%;
   height: 16px;
   display: flex;

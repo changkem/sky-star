@@ -2,7 +2,7 @@
   <div
     ref="resizerRef"
     :class="{ resizer: true, active: state.activity }"
-    :style="addPxSuffix(position)"
+    :style="addPxSuffix(clientRect)"
     @click="handleFocus"
     @dblclick="handleClick"
     @mouseenter="handleIn"
@@ -23,52 +23,58 @@
 </template>
 
 <script lang="ts">
-import {
-  defineComponent,
-  onBeforeUnmount,
-  onMounted,
-  PropType,
-  reactive,
-  ref,
-  unref,
-  watch,
-} from 'vue';
+import { defineComponent, onBeforeUnmount, PropType, reactive, ref, unref, watch } from 'vue';
 import { DRAGGING, ADSORBED, COMP_INSTACE_ACTIVE } from '@/constant/event';
-import { mitt, randomStr, addPxSuffix } from '@/utils';
+import { mitt, randomStr, addPxSuffix, getRange } from '@/utils';
+import type { ComponentType, Rect } from '@/types';
+
+const emitDragging = (id: string, clientRect: Rect) => {
+  mitt.emit(DRAGGING, {
+    id,
+    x: clientRect.left,
+    y: clientRect.top,
+    width: clientRect.width,
+    height: clientRect.height,
+  });
+};
 
 export default defineComponent({
   props: {
-    initalPos: {
-      type: Object as PropType<Record<'left' | 'top' | 'width' | 'height', number>>,
+    initalClientRect: {
+      type: Object as PropType<Rect>,
       default: {},
+    },
+    editorRect: {
+      type: Object as PropType<Record<'width' | 'height', number>>,
+      default: {},
+    },
+    componentType: {
+      type: String as PropType<ComponentType>,
+      default: 'button',
     },
   },
   setup(props) {
-    console.log(props.initalPos);
     const resizerRef = ref<HTMLElement>();
-    const position = reactive({
-      ...props.initalPos,
-      transform: '',
+    const clientRect = reactive({
+      ...props.initalClientRect,
     });
     const state = reactive({ activity: false, focus: false });
 
     const id = randomStr();
-    const intialPos = { x: 0, y: 0 };
-    const startPos = { x: 0, y: 0 };
-    const startRect = { ...position, left: 0, top: 0 };
-    let className = '';
-    let dragging = false;
+    const startInfo = { x: 0, y: 0, className: '', dragging: false };
+    const startRect = { ...clientRect };
 
     const handleFocus = () => {
       state.focus = true;
     };
 
     const handleClick = () => {
-      mitt.emit(COMP_INSTACE_ACTIVE, id);
+      mitt.emit(COMP_INSTACE_ACTIVE, { id, componentType: props.componentType });
     };
 
     const handleIn = () => {
       state.activity = true;
+      emitDragging(id, clientRect);
     };
 
     const handleOut = () => {
@@ -78,65 +84,65 @@ export default defineComponent({
     };
 
     const handleDragStart = (e: MouseEvent) => {
-      startPos.x = e.pageX;
-      startPos.y = e.pageY;
-      Object.assign(startRect, position);
-      className = (e.target as HTMLElement).classList.value;
-      dragging = true;
+      startInfo.x = e.x;
+      startInfo.y = e.y;
+      startInfo.className = (e.target as HTMLElement).classList.value;
+      startInfo.dragging = true;
+      Object.assign(startRect, clientRect);
     };
 
     const handleDrag = (e: MouseEvent) => {
-      if (!dragging) {
+      if (!startInfo.dragging) {
         return;
       }
 
       let left = startRect.left,
         top = startRect.top;
 
-      if (className.endsWith('s')) {
-        position.height = startRect.height + e.pageY - startPos.y;
+      if (startInfo.className.endsWith('s')) {
+        clientRect.height = startRect.height + e.y - startInfo.y;
       }
-      if (className.endsWith('n')) {
-        position.height = startRect.height + startPos.y - e.pageY;
-        top = startRect.top - (startPos.y - e.pageY);
+      if (startInfo.className.endsWith('n')) {
+        clientRect.height = startRect.height + startInfo.y - e.y;
+        top = startRect.top - (startInfo.y - e.y);
       }
-      if (className.includes('-e')) {
-        position.width = startRect.width + e.pageX - startPos.x;
+      if (startInfo.className.includes('-e')) {
+        clientRect.width = startRect.width + e.x - startInfo.x;
       }
-      if (className.includes('-w')) {
-        position.width = startRect.width + startPos.x - e.pageX;
-        left = startRect.left - (startPos.x - e.pageX);
-      }
-
-      if (!className.includes('resize')) {
-        left = startRect.left - (startPos.x - e.pageX);
-        top = startRect.top - (startPos.y - e.pageY);
+      if (startInfo.className.includes('-w')) {
+        clientRect.width = startRect.width + startInfo.x - e.x;
+        left = startRect.left - (startInfo.x - e.x);
       }
 
-      if (position.width < 20 || position.height < 20) {
-        position.width = Math.max(20, position.width);
-        position.height = Math.max(20, position.height);
+      if (!startInfo.className.includes('resize')) {
+        left = startRect.left - (startInfo.x - e.x);
+        top = startRect.top - (startInfo.y - e.y);
+      }
+
+      if (clientRect.width < 20 || clientRect.height < 20) {
+        clientRect.width = Math.max(20, clientRect.width);
+        clientRect.height = Math.max(20, clientRect.height);
         return;
       }
 
-      position.left = left;
-      position.top = top;
+      clientRect.left = getRange(0, props.editorRect.width - clientRect.width, left);
+      clientRect.top = getRange(0, props.editorRect.height, top);
     };
 
     const handleDragEnd = (e: MouseEvent) => {
-      dragging = false;
+      startInfo.dragging = false;
       if (!state.focus) {
         return;
       }
-      if (!className.includes('resize')) {
-        startRect.left += e.pageX - startPos.x;
-        startRect.top += e.pageY - startPos.y;
+      if (!startInfo.className.includes('resize')) {
+        startRect.left += e.x - startInfo.x;
+        startRect.top += e.y - startInfo.y;
       }
-      if (className.includes('-w')) {
-        startRect.left += startRect.width - position.width;
+      if (startInfo.className.includes('-w')) {
+        startRect.left += startRect.width - clientRect.width;
       }
-      if (className.endsWith('n')) {
-        startRect.top += startRect.height - position.height;
+      if (startInfo.className.endsWith('n')) {
+        startRect.top += startRect.height - clientRect.height;
       }
     };
 
@@ -146,15 +152,8 @@ export default defineComponent({
       state.activity = inside;
     };
 
-    watch(position, () => {
-      // console.log(position, intialPos);
-      mitt.emit(DRAGGING, {
-        id,
-        x: intialPos.x + position.left - 400,
-        y: intialPos.y + position.top - 200,
-        width: position.width,
-        height: position.height,
-      });
+    watch(clientRect, () => {
+      emitDragging(id, clientRect);
     });
 
     mitt.on(ADSORBED, (targetPos) => {
@@ -171,16 +170,10 @@ export default defineComponent({
       document.removeEventListener('mouseup', handleDragEnd);
     });
 
-    onMounted(() => {
-      const { x, y } = resizerRef.value!.getBoundingClientRect();
-      intialPos.x = x;
-      intialPos.y = y;
-    });
-
     return {
       state,
       resizerRef,
-      position,
+      clientRect,
       addPxSuffix,
       handleIn,
       handleOut,

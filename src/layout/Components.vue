@@ -17,7 +17,6 @@ export default defineComponent({
   setup() {
     const handleDragStart = (type: string, e: DragEvent) => {
       const clientRect = (e.target as HTMLElement).getBoundingClientRect();
-      e.dataTransfer.effectAllowed = 'move';
       mitt.emit(CHOOSE_COMPONENT, {
         type,
         offsetX: e.pageX - clientRect.x,

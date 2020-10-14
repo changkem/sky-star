@@ -8,7 +8,7 @@ import { mitt } from '@/utils';
 import { COMP_INSTACE_ACTIVE } from '@/constant/event';
 
 interface State {
-  config: Record<string, {}>;
+  config: Record<string, unknown>;
 }
 
 export default defineComponent({
@@ -27,5 +27,6 @@ export default defineComponent({
 .operation {
   flex: 1;
   max-width: 400px;
+  border: 1px solid #ccc;
 }
 </style>
