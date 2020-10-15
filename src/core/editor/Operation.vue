@@ -1,5 +1,7 @@
 <template>
-  <div class="operation" />
+  <div class="operation">
+    <a-button>233</a-button>
+  </div>
 </template>
 
 <script lang="ts">
@@ -14,8 +16,8 @@ interface State {
 export default defineComponent({
   setup() {
     const { config } = reactive<State>({ config: {} });
-    mitt.on(COMP_INSTACE_ACTIVE, (id) => {
-      config[id] = {};
+    mitt.on(COMP_INSTACE_ACTIVE, ({ id, componentType }) => {
+      config[id] = { componentType };
       console.log(id, config);
     });
     return {};
@@ -27,6 +29,6 @@ export default defineComponent({
 .operation {
   flex: 1;
   max-width: 400px;
-  border: 1px solid #ccc;
+  border: 1px #ccc solid;
 }
 </style>

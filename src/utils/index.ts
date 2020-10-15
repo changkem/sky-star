@@ -30,3 +30,5 @@ export const getRange = (min: number, max: number, val: number): number => {
   }
   return val;
 };
+
+export { LineTools } from './LineTools';

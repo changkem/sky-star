@@ -13,7 +13,7 @@
       :editor-rect="state.border"
       :component-type="'button'"
     >
-      <div style="width: 100px; height: 80px; background: blue" />
+      <div style="width: 100%; height: 100%; background: blue" />
     </DragResizer>
     <slot />
   </div>
@@ -22,23 +22,46 @@
 <script lang="ts">
 import { defineComponent, onMounted, reactive } from 'vue';
 import { pick } from 'lodash-es';
-import { mitt, addPxSuffix } from '@/utils';
+import { mitt, addPxSuffix, LineTools } from '@/utils';
 import { CHOOSE_COMPONENT, DRAGGING } from '@/constant/event';
-import Ruler from '@/components/Ruler.vue';
-import DragResizer from '@/components/DragResizer.vue';
+import Ruler from '@/core/components/Ruler.vue';
+import DragResizer from '@/core/components/DragResizer.vue';
 import type { Rect } from '@/types';
+
+type Element = { componentType: string } & Rect;
 
 interface State {
   border: Record<typeof properties[number], number>;
   rules: Record<string, Partial<Rect>>;
-  elements: Rect[];
+  elements: Element[];
 }
+
+type Pos = {
+  id: string;
+  instanceId: string;
+  x: number;
+  y: number;
+  width?: number;
+  height?: number;
+};
+
+const lineTools = new LineTools();
 
 const properties = ['left', 'right', 'top', 'bottom', 'width', 'height'] as const;
 
-const positions: (Record<'x' | 'y' | 'width' | 'height', number> & { id: string })[] = [];
+const horizontalPos: Pos[] = [];
 
-const updatePositions = (pos: typeof positions[number]) => {
+const verticalPos: Pos[] = [];
+
+const insertVertical = (pos: Pos) => {
+  updatePositions(verticalPos, pos);
+};
+
+const insertHorizontal = (pos: Pos) => {
+  updatePositions(horizontalPos, pos);
+};
+
+const updatePositions = (positions: Pos[], pos: Pos) => {
   const index = positions.findIndex((p) => p.id === pos.id);
   if (index !== -1) {
     positions[index] = pos;
@@ -53,6 +76,7 @@ export default defineComponent({
     DragResizer,
   },
   setup() {
+    let componentType = 'button';
     const state = reactive<State>({ border: {} as State['border'], rules: {}, elements: [] });
 
     onMounted(() => {
@@ -60,62 +84,53 @@ export default defineComponent({
       const clientRect = el!.getBoundingClientRect();
       state.border = pick(clientRect, properties);
       state.border.top -= 100;
-      updatePositions({
-        id: 'left',
-        x: clientRect.x,
-        y: clientRect.y,
+      lineTools.insertLine({
+        instanceId: 'border',
+        x: clientRect.left,
+        y: clientRect.top,
         width: 0,
         height: clientRect.height,
-      });
-      updatePositions({
-        id: 'top',
-        x: 0,
-        y: 0,
-        width: clientRect.width,
-        height: 0,
-      });
-      updatePositions({
-        id: 'right',
-        x: clientRect.right,
-        y: 0,
-        width: 0,
-        height: clientRect.height,
-      });
-      updatePositions({
-        id: 'bottom',
-        x: 0,
-        y: clientRect.bottom,
-        width: clientRect.width,
-        height: 0,
       });
     });
 
     const handleDrop = (e: DragEvent) => {
       e.stopPropagation();
       e.preventDefault();
-      console.log(e);
-      state.elements.push({ left: e.pageX - 200, top: e.pageY - 100, width: 100, height: 80 });
+      state.elements.push({
+        left: e.pageX - 200,
+        top: e.pageY - 100,
+        width: 100,
+        height: 80,
+        componentType,
+      });
     };
 
     mitt.on(DRAGGING, (pos) => {
-      updatePositions(pos);
-      console.log(positions.sort((a, b) => a.x - b.x));
-      state.rules.top = { left: pos.x + pos.width / 2, top: 0, height: pos.y - state.border.top };
-      state.rules.left = { left: 0, top: pos.y + pos.height / 2, width: pos.x };
+      // updatePositions(pos);
+      // console.log(positions.sort((a, b) => a.left - b.left));
+      // console.log(positions.sort((a, b) => a.top - b.top));
+      // console.log(positions.sort((a, b) => a.left + a.width - b.left ));
+      // console.log(positions.sort((a, b) => a.left - b.left));
+      state.rules.top = {
+        left: pos.left + pos.width / 2,
+        top: 0,
+        height: pos.top - state.border.top,
+      };
+      state.rules.left = { left: 0, top: pos.top + pos.height / 2, width: pos.left };
       state.rules.right = {
-        left: pos.x + pos.width,
-        top: pos.y + pos.height / 2,
-        width: state.border.right - pos.x - pos.width,
+        left: pos.left + pos.width,
+        top: pos.top + pos.height / 2,
+        width: state.border.right - pos.left - pos.width,
       };
       state.rules.bottom = {
-        left: pos.x + pos.width / 2,
-        top: pos.y + pos.height,
-        height: state.border.bottom - pos.y - pos.height,
+        left: pos.left + pos.width / 2,
+        top: pos.top + pos.height,
+        height: state.border.bottom - pos.top - pos.height,
       };
     });
 
     mitt.on(CHOOSE_COMPONENT, (params) => {
-      console.log(params);
+      componentType = params.componentType;
     });
 
     document.addEventListener('keyup', (e) => {

@@ -3,8 +3,6 @@
     ref="resizerRef"
     :class="{ resizer: true, active: state.activity }"
     :style="addPxSuffix(clientRect)"
-    @click="handleFocus"
-    @dblclick="handleClick"
     @mouseenter="handleIn"
     @mouseleave="handleOut"
     @mousedown.prevent="handleDragStart"
@@ -31,8 +29,8 @@ import type { ComponentType, Rect } from '@/types';
 const emitDragging = (id: string, clientRect: Rect) => {
   mitt.emit(DRAGGING, {
     id,
-    x: clientRect.left,
-    y: clientRect.top,
+    left: clientRect.left,
+    top: clientRect.top,
     width: clientRect.width,
     height: clientRect.height,
   });
@@ -64,14 +62,6 @@ export default defineComponent({
     const startInfo = { x: 0, y: 0, className: '', dragging: false };
     const startRect = { ...clientRect };
 
-    const handleFocus = () => {
-      state.focus = true;
-    };
-
-    const handleClick = () => {
-      mitt.emit(COMP_INSTACE_ACTIVE, { id, componentType: props.componentType });
-    };
-
     const handleIn = () => {
       state.activity = true;
       emitDragging(id, clientRect);
@@ -88,35 +78,38 @@ export default defineComponent({
       startInfo.y = e.y;
       startInfo.className = (e.target as HTMLElement).classList.value;
       startInfo.dragging = true;
+      state.focus = true;
       Object.assign(startRect, clientRect);
+      mitt.emit(COMP_INSTACE_ACTIVE, { id, componentType: props.componentType });
     };
 
     const handleDrag = (e: MouseEvent) => {
       if (!startInfo.dragging) {
         return;
       }
-
+      const deltaX = e.x - startInfo.x,
+        deltaY = e.y - startInfo.y;
       let left = startRect.left,
         top = startRect.top;
 
       if (startInfo.className.endsWith('s')) {
-        clientRect.height = startRect.height + e.y - startInfo.y;
+        clientRect.height = startRect.height + deltaY;
       }
       if (startInfo.className.endsWith('n')) {
-        clientRect.height = startRect.height + startInfo.y - e.y;
-        top = startRect.top - (startInfo.y - e.y);
+        clientRect.height = startRect.height - deltaY;
+        top = startRect.top + deltaY;
       }
       if (startInfo.className.includes('-e')) {
-        clientRect.width = startRect.width + e.x - startInfo.x;
+        clientRect.width = startRect.width + deltaX;
       }
       if (startInfo.className.includes('-w')) {
-        clientRect.width = startRect.width + startInfo.x - e.x;
-        left = startRect.left - (startInfo.x - e.x);
+        clientRect.width = startRect.width - deltaX;
+        left = startRect.left + deltaX;
       }
 
       if (!startInfo.className.includes('resize')) {
-        left = startRect.left - (startInfo.x - e.x);
-        top = startRect.top - (startInfo.y - e.y);
+        left = startRect.left + deltaX;
+        top = startRect.top + deltaY;
       }
 
       if (clientRect.width < 20 || clientRect.height < 20) {
@@ -177,8 +170,6 @@ export default defineComponent({
       addPxSuffix,
       handleIn,
       handleOut,
-      handleClick,
-      handleFocus,
       handleDragStart,
     };
   },

@@ -15,10 +15,10 @@ import { CHOOSE_COMPONENT } from '@/constant/event';
 
 export default defineComponent({
   setup() {
-    const handleDragStart = (type: string, e: DragEvent) => {
+    const handleDragStart = (componentType: string, e: DragEvent) => {
       const clientRect = (e.target as HTMLElement).getBoundingClientRect();
       mitt.emit(CHOOSE_COMPONENT, {
-        type,
+        componentType,
         offsetX: e.pageX - clientRect.x,
         offsetY: e.pageY - clientRect.y,
       });
