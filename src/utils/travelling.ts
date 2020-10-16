@@ -5,7 +5,7 @@ export interface SerializedState {
     width: number;
     height: number;
   };
-  config: {};
+  config: unknown;
 }
 
 export default class Travelling {

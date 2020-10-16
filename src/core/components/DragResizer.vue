@@ -22,15 +22,15 @@
 
 <script lang="ts">
 import { defineComponent, onBeforeUnmount, PropType, reactive, ref, unref, watch } from 'vue';
-import { DRAGGING, ADSORBED, COMP_INSTACE_ACTIVE } from '@/constant/event';
+import { DRAGGING, ADSORBED, COMP_INSTACE_ACTIVE, COMP_INSTACE_PASSIVE } from '@/constant/event';
 import { mitt, randomStr, addPxSuffix, getRange } from '@/utils';
 import type { ComponentType, Rect } from '@/types';
 
-const emitDragging = (id: string, clientRect: Rect) => {
+const emitDragging = (instanceId: string, clientRect: Rect) => {
   mitt.emit(DRAGGING, {
-    id,
-    left: clientRect.left,
-    top: clientRect.top,
+    instanceId,
+    x: clientRect.left,
+    y: clientRect.top,
     width: clientRect.width,
     height: clientRect.height,
   });
@@ -64,7 +64,6 @@ export default defineComponent({
 
     const handleIn = () => {
       state.activity = true;
-      emitDragging(id, clientRect);
     };
 
     const handleOut = () => {
@@ -80,6 +79,7 @@ export default defineComponent({
       startInfo.dragging = true;
       state.focus = true;
       Object.assign(startRect, clientRect);
+      emitDragging(id, clientRect);
       mitt.emit(COMP_INSTACE_ACTIVE, { id, componentType: props.componentType });
     };
 
@@ -143,6 +143,9 @@ export default defineComponent({
       const inside = unref(resizerRef)!.contains(e.target as HTMLElement);
       state.focus = inside;
       state.activity = inside;
+      if (inside === false) {
+        mitt.emit(COMP_INSTACE_PASSIVE, true);
+      }
     };
 
     watch(clientRect, () => {

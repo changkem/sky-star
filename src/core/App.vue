@@ -11,7 +11,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import Header from '@/core/Header.vue';
+import Header from '@/core/components/Header.vue';
 import Editor from '@/core/editor/Editor.vue';
 import Operation from '@/core/editor/Operation.vue';
 import Components from '@/core/editor/Components.vue';

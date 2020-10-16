@@ -32,3 +32,5 @@ export const getRange = (min: number, max: number, val: number): number => {
 };
 
 export { LineTools } from './LineTools';
+
+export { BSTree } from './BSTree';

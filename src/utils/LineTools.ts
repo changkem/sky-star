@@ -1,3 +1,5 @@
+import { BSTree } from './BSTree';
+
 type Line = {
   /**标识线段 */
   id: string;
@@ -17,6 +19,7 @@ export class LineTools {
   constructor() {
     this.verticalLines = [];
     this.horizontalLines = [];
+    new BSTree<Line>();
   }
 
   update = (lines: Line[], line: Line): void => {
@@ -44,7 +47,11 @@ export class LineTools {
     this.update(this.verticalLines, vr);
   }
 
-  getNearlyLine(): [Line, Line] {
-    return [this.verticalLines[0], this.horizontalLines[0]];
+  getNearlyLine(id: string): [Line, Line] {
+    const sortY = this.horizontalLines.sort((a, b) => a.y - b.y);
+    const yIndex = sortY.findIndex((line) => line.id === id + 'ht');
+    const sortX = this.verticalLines.sort((a, b) => a.x - b.x);
+    const xIndex = sortX.findIndex((line) => line.id === id + 'vl');
+    return [sortX[xIndex - 1], sortY[yIndex - 1]];
   }
 }

@@ -5,7 +5,14 @@
     @dragover.prevent="$event.dataTransfer.dropEffect = 'move'"
   >
     <Ruler />
-    <div v-for="(style, cls) in state.rules" :key="cls" :class="cls" :style="addPxSuffix(style)" />
+    <div>
+      <div
+        v-for="(style, cls) in state.rules"
+        :key="cls"
+        :class="cls"
+        :style="addPxSuffix(style)"
+      />
+    </div>
     <DragResizer
       v-for="item in state.elements"
       :key="item"
@@ -23,7 +30,7 @@
 import { defineComponent, onMounted, reactive } from 'vue';
 import { pick } from 'lodash-es';
 import { mitt, addPxSuffix, LineTools } from '@/utils';
-import { CHOOSE_COMPONENT, DRAGGING } from '@/constant/event';
+import { CHOOSE_COMPONENT, COMP_INSTACE_PASSIVE, DRAGGING } from '@/constant/event';
 import Ruler from '@/core/components/Ruler.vue';
 import DragResizer from '@/core/components/DragResizer.vue';
 import type { Rect } from '@/types';
@@ -49,27 +56,6 @@ const lineTools = new LineTools();
 
 const properties = ['left', 'right', 'top', 'bottom', 'width', 'height'] as const;
 
-const horizontalPos: Pos[] = [];
-
-const verticalPos: Pos[] = [];
-
-const insertVertical = (pos: Pos) => {
-  updatePositions(verticalPos, pos);
-};
-
-const insertHorizontal = (pos: Pos) => {
-  updatePositions(horizontalPos, pos);
-};
-
-const updatePositions = (positions: Pos[], pos: Pos) => {
-  const index = positions.findIndex((p) => p.id === pos.id);
-  if (index !== -1) {
-    positions[index] = pos;
-  } else {
-    positions.push(pos);
-  }
-};
-
 export default defineComponent({
   components: {
     Ruler,
@@ -83,11 +69,10 @@ export default defineComponent({
       const el = document.querySelector('.editor');
       const clientRect = el!.getBoundingClientRect();
       state.border = pick(clientRect, properties);
-      state.border.top -= 100;
       lineTools.insertLine({
         instanceId: 'border',
-        x: clientRect.left,
-        y: clientRect.top,
+        x: clientRect.left - 200,
+        y: clientRect.top - 100,
         width: 0,
         height: clientRect.height,
       });
@@ -106,26 +91,23 @@ export default defineComponent({
     };
 
     mitt.on(DRAGGING, (pos) => {
-      // updatePositions(pos);
-      // console.log(positions.sort((a, b) => a.left - b.left));
-      // console.log(positions.sort((a, b) => a.top - b.top));
-      // console.log(positions.sort((a, b) => a.left + a.width - b.left ));
-      // console.log(positions.sort((a, b) => a.left - b.left));
+      lineTools.insertLine(pos);
+      console.log(lineTools.getNearlyLine(pos.instanceId));
       state.rules.top = {
-        left: pos.left + pos.width / 2,
+        left: pos.x + pos.width / 2,
         top: 0,
-        height: pos.top - state.border.top,
+        height: pos.y - state.border.top,
       };
-      state.rules.left = { left: 0, top: pos.top + pos.height / 2, width: pos.left };
+      state.rules.left = { left: 0, top: pos.y + pos.height / 2, width: pos.x };
       state.rules.right = {
-        left: pos.left + pos.width,
-        top: pos.top + pos.height / 2,
-        width: state.border.right - pos.left - pos.width,
+        left: pos.x + pos.width,
+        top: pos.y + pos.height / 2,
+        width: state.border.right - pos.x - pos.width,
       };
       state.rules.bottom = {
-        left: pos.left + pos.width / 2,
-        top: pos.top + pos.height,
-        height: state.border.bottom - pos.top - pos.height,
+        left: pos.x + pos.width / 2,
+        top: pos.y + pos.height,
+        height: state.border.bottom - pos.y - pos.height,
       };
     });
 
@@ -133,8 +115,11 @@ export default defineComponent({
       componentType = params.componentType;
     });
 
+    mitt.on(COMP_INSTACE_PASSIVE, () => {
+      state.rules = {};
+    });
+
     document.addEventListener('keyup', (e) => {
-      console.log(e);
       if (e.keyCode === 27) {
         // escape;
       }
