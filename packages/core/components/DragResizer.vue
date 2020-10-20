@@ -25,16 +25,21 @@ import { defineComponent, onBeforeUnmount, PropType, reactive, ref, unref, watch
 import { DRAGGING, ADSORBED, COMP_INSTACE_ACTIVE, COMP_INSTACE_PASSIVE } from '../constant/event';
 import { mitt, addPxSuffix, getRange } from '@/utils';
 import type { ComponentType, Rect } from '@/types';
+import { debounce } from 'lodash-es';
 
-const emitDragging = (instanceId: string, clientRect: Rect) => {
-  mitt.emit(DRAGGING, {
-    instanceId,
-    x: clientRect.left,
-    y: clientRect.top,
-    width: clientRect.width,
-    height: clientRect.height,
-  });
-};
+const emitDragging = debounce(
+  (instanceId: string, clientRect: Rect, direction: Record<'toRight' | 'toBottom', boolean>) => {
+    mitt.emit(DRAGGING, {
+      instanceId,
+      ...direction,
+      x: clientRect.left,
+      y: clientRect.top,
+      width: clientRect.width,
+      height: clientRect.height,
+    });
+  },
+  0,
+);
 
 export default defineComponent({
   props: {
@@ -60,6 +65,7 @@ export default defineComponent({
     const clientRect = reactive({
       ...props.initalClientRect,
     });
+    const direction = { toRight: true, toBottom: true };
     const state = reactive({ activity: false, focus: false });
 
     // eslint-disable-next-line vue/no-setup-props-destructure
@@ -89,7 +95,7 @@ export default defineComponent({
       startInfo.dragging = true;
       state.focus = true;
       Object.assign(startRect, clientRect);
-      emitDragging(id, clientRect);
+      emitDragging(id, clientRect, direction);
       mitt.emit(COMP_INSTACE_ACTIVE, { id, componentType: props.componentType });
     };
 
@@ -102,8 +108,8 @@ export default defineComponent({
       let left = startRect.left,
         top = startRect.top;
 
-      // directionX = e.x - prevX > 0;
-      // directionY = e.y - prevY > 0;
+      direction.toRight = e.x - prevX > 0;
+      direction.toBottom = e.y - prevY > 0;
 
       if (startInfo.className.endsWith('s')) {
         clientRect.height = startRect.height + deltaY;
@@ -162,7 +168,7 @@ export default defineComponent({
     };
 
     watch(clientRect, () => {
-      emitDragging(id, clientRect);
+      emitDragging(id, clientRect, direction);
     });
 
     mitt.on(ADSORBED, (targetPos) => {

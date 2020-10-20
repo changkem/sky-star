@@ -1,4 +1,6 @@
 export default {
-  component: {},
+  component: {
+    name: 'button',
+  },
   configForm: {},
 };

@@ -95,20 +95,26 @@ export default defineComponent({
     mitt.on(DRAGGING, (pos) => {
       lineTools.insertLine(pos);
       const [left, top] = lineTools.getNearlyLine(pos.instanceId);
-      console.log(top, pos);
+      console.log(left, top);
       state.rules.top = {
         left: pos.x + pos.width / 2,
         top: top.y,
         height: pos.y - top.y,
       };
       state.rules.topL = {
-        left: 0,
-        top: top.y,
+        left: Math.min(left.x, top.x),
+        top: top.y - 1,
+        width: top.x < pos.x ? pos.x + pos.width - top.x : top.x - left.x,
       };
-      state.rules.left = { left: left.x, top: pos.y + pos.height / 2, width: pos.x - left.x };
-      state.rules.leftL = {
+      state.rules.left = {
         left: left.x,
-        top: 0,
+        top: pos.y + pos.height / 2,
+        width: pos.x - left.x,
+      };
+      state.rules.leftL = {
+        left: left.x - 1,
+        top: top.y,
+        height: pos.y + pos.height - top.y,
       };
       // state.rules.right = {
       //   left: pos.x + pos.width,
