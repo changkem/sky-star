@@ -1,6 +1,6 @@
 import { createApp } from 'vue';
 import { Button, Form } from 'ant-design-vue';
-import { mitt } from './utils';
+import { mitt } from '../packages/utils';
 
 import App from './App.vue';
 import 'ant-design-vue/dist/antd.css';

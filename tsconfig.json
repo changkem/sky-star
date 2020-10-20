@@ -7,7 +7,7 @@
     "module": "esnext",
     "target": "esnext",
     "paths": {
-      "@/*": ["./src/*"],
+      "@/*": ["./packages/*"],
     },
     "moduleResolution": "node",
   }

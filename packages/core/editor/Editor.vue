@@ -1,10 +1,11 @@
 <template>
   <div
+    ref="editorRef"
     class="editor"
     @drop="handleDrop"
     @dragover.prevent="$event.dataTransfer.dropEffect = 'move'"
   >
-    <Ruler />
+    <Ruler v-if="state.border.width" :width="state.border.width" :height="state.border.height" />
     <div>
       <div
         v-for="(style, cls) in state.rules"
@@ -15,6 +16,7 @@
     </div>
     <DragResizer
       v-for="item in state.elements"
+      :id="item.id"
       :key="item"
       :inital-client-rect="item"
       :editor-rect="state.border"
@@ -27,30 +29,20 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, onMounted, reactive } from 'vue';
+import { defineComponent, onMounted, reactive, ref, unref } from 'vue';
 import { pick } from 'lodash-es';
-import { mitt, addPxSuffix, LineTools } from '@/utils';
-import { CHOOSE_COMPONENT, COMP_INSTACE_PASSIVE, DRAGGING } from '@/constant/event';
-import Ruler from '@/core/components/Ruler.vue';
-import DragResizer from '@/core/components/DragResizer.vue';
-import type { Rect } from '@/types';
+import { mitt, addPxSuffix, LineTools, randomStr } from '../../utils';
+import { CHOOSE_COMPONENT, COMP_INSTACE_PASSIVE, DRAGGING } from '../constant/event';
+import { Ruler, DragResizer } from '../components';
+import type { Rect } from '../../types';
 
-type Element = { componentType: string } & Rect;
+type Element = { componentType: string; id: string } & Rect;
 
 interface State {
   border: Record<typeof properties[number], number>;
   rules: Record<string, Partial<Rect>>;
   elements: Element[];
 }
-
-type Pos = {
-  id: string;
-  instanceId: string;
-  x: number;
-  y: number;
-  width?: number;
-  height?: number;
-};
 
 const lineTools = new LineTools();
 
@@ -62,18 +54,19 @@ export default defineComponent({
     DragResizer,
   },
   setup() {
+    const editorRef = ref();
     let componentType = 'button';
     const state = reactive<State>({ border: {} as State['border'], rules: {}, elements: [] });
 
     onMounted(() => {
-      const el = document.querySelector('.editor');
+      const el = unref(editorRef);
       const clientRect = el!.getBoundingClientRect();
       state.border = pick(clientRect, properties);
       lineTools.insertLine({
         instanceId: 'border',
         x: clientRect.left - 200,
         y: clientRect.top - 100,
-        width: 0,
+        width: clientRect.width,
         height: clientRect.height,
       });
     });
@@ -81,7 +74,16 @@ export default defineComponent({
     const handleDrop = (e: DragEvent) => {
       e.stopPropagation();
       e.preventDefault();
+      const id = randomStr();
+      lineTools.insertLine({
+        instanceId: id,
+        x: e.pageX - 200,
+        y: e.pageY - 100,
+        width: 100,
+        height: 80,
+      });
       state.elements.push({
+        id,
         left: e.pageX - 200,
         top: e.pageY - 100,
         width: 100,
@@ -92,23 +94,32 @@ export default defineComponent({
 
     mitt.on(DRAGGING, (pos) => {
       lineTools.insertLine(pos);
-      console.log(lineTools.getNearlyLine(pos.instanceId));
+      const [left, top] = lineTools.getNearlyLine(pos.instanceId);
+      console.log(top, pos);
       state.rules.top = {
         left: pos.x + pos.width / 2,
+        top: top.y,
+        height: pos.y - top.y,
+      };
+      state.rules.topL = {
+        left: 0,
+        top: top.y,
+      };
+      state.rules.left = { left: left.x, top: pos.y + pos.height / 2, width: pos.x - left.x };
+      state.rules.leftL = {
+        left: left.x,
         top: 0,
-        height: pos.y - state.border.top,
       };
-      state.rules.left = { left: 0, top: pos.y + pos.height / 2, width: pos.x };
-      state.rules.right = {
-        left: pos.x + pos.width,
-        top: pos.y + pos.height / 2,
-        width: state.border.right - pos.x - pos.width,
-      };
-      state.rules.bottom = {
-        left: pos.x + pos.width / 2,
-        top: pos.y + pos.height,
-        height: state.border.bottom - pos.y - pos.height,
-      };
+      // state.rules.right = {
+      //   left: pos.x + pos.width,
+      //   top: pos.y + pos.height / 2,
+      //   width: state.border.right - pos.x - pos.width,
+      // };
+      // state.rules.bottom = {
+      //   left: pos.x + pos.width / 2,
+      //   top: pos.y + pos.height,
+      //   height: state.border.bottom - pos.y - pos.height,
+      // };
     });
 
     mitt.on(CHOOSE_COMPONENT, (params) => {
@@ -128,26 +139,58 @@ export default defineComponent({
       }
     });
 
-    return { state, addPxSuffix, handleDrop };
+    return { state, addPxSuffix, handleDrop, editorRef };
   },
 });
 </script>
 
-<style lang="less">
+<style lang="less" scoped>
 .editor {
   position: relative;
   height: 100%;
+  &::before {
+    content: ' ';
+    position: absolute;
+    left: 50%;
+    height: 100%;
+    border-right: 1px #ccc dashed;
+    transform: translateX(-50%);
+    z-index: -1;
+  }
+  &::after {
+    content: ' ';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    border-top: 1px #ccc dashed;
+    transform: translateY(-50%);
+    z-index: -1;
+  }
 }
+
 .left,
 .right,
 .top,
-.bottom {
+.bottom,
+.topL,
+.leftL {
   position: absolute;
 }
 .left,
 .right {
   height: 2px;
   background: purple;
+}
+.topL {
+  width: 100%;
+  height: 1px;
+  background: blue;
+}
+.leftL {
+  width: 1px;
+  height: 100%;
+  background: blue;
 }
 .top,
 .bottom {

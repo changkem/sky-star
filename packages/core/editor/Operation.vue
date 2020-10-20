@@ -7,7 +7,7 @@
 <script lang="ts">
 import { defineComponent, reactive } from 'vue';
 import { mitt } from '@/utils';
-import { COMP_INSTACE_ACTIVE } from '@/constant/event';
+import { COMP_INSTACE_ACTIVE } from '../constant/event';
 
 interface State {
   config: Record<string, unknown>;

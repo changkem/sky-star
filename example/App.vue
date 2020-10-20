@@ -4,7 +4,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import Editor from '@/core';
+import Editor from '../packages/core';
 
 export default defineComponent({
   name: 'App',
@@ -14,13 +14,4 @@ export default defineComponent({
 });
 </script>
 
-<style lang="less" scoped>
-.content {
-  display: flex;
-  min-height: 100vh;
-}
-.viewer {
-  flex: 3;
-  overflow: auto;
-}
-</style>
+<style lang="less" scoped></style>

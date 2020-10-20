@@ -30,7 +30,7 @@ export default defineComponent({
 <style lang="less" scoped>
 .content {
   display: flex;
-  min-height: 100vh;
+  height: 100%;
 }
 .viewer {
   flex: 3;

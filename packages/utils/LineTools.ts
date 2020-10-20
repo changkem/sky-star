@@ -13,6 +13,10 @@ type Line = {
 
 type PartialOne<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 
+const alignH = ['ht', 'hm', 'hb'];
+
+const alignV = ['vl', 'vm', 'vr'];
+
 export class LineTools {
   private verticalLines: Line[];
   private horizontalLines: Line[];
@@ -37,8 +41,7 @@ export class LineTools {
       hb = { ...line, y: line.y + line.height, id: line.instanceId + 'hb' },
       vl = { ...line, id: line.instanceId + 'vl' },
       vm = { ...line, x: line.x + line.width / 2, id: line.instanceId + 'vm' },
-      vr = { ...line, y: line.x + line.width, id: line.instanceId + 'vr' };
-
+      vr = { ...line, x: line.x + line.width, id: line.instanceId + 'vr' };
     this.update(this.horizontalLines, ht);
     this.update(this.horizontalLines, hm);
     this.update(this.horizontalLines, hb);
@@ -52,6 +55,7 @@ export class LineTools {
     const yIndex = sortY.findIndex((line) => line.id === id + 'ht');
     const sortX = this.verticalLines.sort((a, b) => a.x - b.x);
     const xIndex = sortX.findIndex((line) => line.id === id + 'vl');
+    console.log(this.horizontalLines);
     return [sortX[xIndex - 1], sortY[yIndex - 1]];
   }
 }

@@ -11,7 +11,7 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
 import { mitt } from '@/utils';
-import { CHOOSE_COMPONENT } from '@/constant/event';
+import { CHOOSE_COMPONENT } from '../constant/event';
 
 export default defineComponent({
   setup() {

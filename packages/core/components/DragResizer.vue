@@ -22,8 +22,8 @@
 
 <script lang="ts">
 import { defineComponent, onBeforeUnmount, PropType, reactive, ref, unref, watch } from 'vue';
-import { DRAGGING, ADSORBED, COMP_INSTACE_ACTIVE, COMP_INSTACE_PASSIVE } from '@/constant/event';
-import { mitt, randomStr, addPxSuffix, getRange } from '@/utils';
+import { DRAGGING, ADSORBED, COMP_INSTACE_ACTIVE, COMP_INSTACE_PASSIVE } from '../constant/event';
+import { mitt, addPxSuffix, getRange } from '@/utils';
 import type { ComponentType, Rect } from '@/types';
 
 const emitDragging = (instanceId: string, clientRect: Rect) => {
@@ -38,6 +38,10 @@ const emitDragging = (instanceId: string, clientRect: Rect) => {
 
 export default defineComponent({
   props: {
+    id: {
+      type: String as PropType<string>,
+      default: '',
+    },
     initalClientRect: {
       type: Object as PropType<Rect>,
       default: {},
@@ -58,9 +62,13 @@ export default defineComponent({
     });
     const state = reactive({ activity: false, focus: false });
 
-    const id = randomStr();
+    // eslint-disable-next-line vue/no-setup-props-destructure
+    const { id } = props;
     const startInfo = { x: 0, y: 0, className: '', dragging: false };
     const startRect = { ...clientRect };
+
+    let prevX = 0,
+      prevY = 0;
 
     const handleIn = () => {
       state.activity = true;
@@ -75,6 +83,8 @@ export default defineComponent({
     const handleDragStart = (e: MouseEvent) => {
       startInfo.x = e.x;
       startInfo.y = e.y;
+      prevX = e.x;
+      prevY = e.y;
       startInfo.className = (e.target as HTMLElement).classList.value;
       startInfo.dragging = true;
       state.focus = true;
@@ -91,6 +101,9 @@ export default defineComponent({
         deltaY = e.y - startInfo.y;
       let left = startRect.left,
         top = startRect.top;
+
+      // directionX = e.x - prevX > 0;
+      // directionY = e.y - prevY > 0;
 
       if (startInfo.className.endsWith('s')) {
         clientRect.height = startRect.height + deltaY;

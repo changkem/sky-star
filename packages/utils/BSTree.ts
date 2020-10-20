@@ -4,7 +4,13 @@
 //   right: Node<T> | null;
 // }
 
-type WithId = { id: string };
+type WithId = { id: string; instanceId: string };
+
+/**
+ * 缓存所有组件边界线
+ * 空间换时间，以便更好找到可以对齐的线
+ */
+const cacheLines: Record<string, unknown> = {};
 
 class Node<T extends WithId> {
   public data: T | null = null;
@@ -24,13 +30,18 @@ export class BSTree<T extends WithId> {
   }
 
   insert(el: T): void {
+    cacheLines[el.id] = el;
+    // align.forEach((key) => {
+    //   const val = cacheLines[el.intanceId + key].;
+    //   this.remove();
+    // });
     if (this.root === null) {
       this.root = new Node(el);
       this.size++;
     }
   }
 
-  find(): T | null {
+  findById(): T | null {
     return null;
   }
 
